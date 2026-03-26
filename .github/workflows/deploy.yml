@@ -87,6 +87,7 @@ jobs:
             cd ~/after-buy-infra
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker-compose -f docker-compose.yml -f docker-compose.dev.yml pull auth-service
+            docker-compose -f docker-compose.yml -f docker-compose.dev.yml rm -f auth-service
             docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d auth-service
             docker image prune -f
 
@@ -130,5 +131,6 @@ jobs:
             cd ~/after-buy-infra
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml pull auth-service
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml rm -f auth-service
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d auth-service
             docker image prune -f
