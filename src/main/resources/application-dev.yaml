@@ -1,0 +1,16 @@
+# Dev 환경 전용 설정 (application.yaml 공통 설정을 이 파일이 오버라이드)
+# SPRING_PROFILES_ACTIVE=dev 일 때 자동 적용
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update    # Dev: 코드 변경 시 테이블 자동 반영 허용
+    show-sql: true        # Dev: SQL 로그 출력 (디버깅용)
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    root: INFO
+    com.After_Buy: DEBUG  # 서비스 패키지 DEBUG 레벨
