@@ -1,0 +1,16 @@
+# Prod 환경 전용 설정 (application.yaml 공통 설정을 이 파일이 오버라이드)
+# SPRING_PROFILES_ACTIVE=prod 일 때 자동 적용
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Prod: 테이블 구조 검증만, 자동 변경 절대 금지
+    show-sql: false       # Prod: SQL 로그 비활성화 (성능 최적화)
+    properties:
+      hibernate:
+        format_sql: false
+
+logging:
+  level:
+    root: WARN            # Prod: WARN 이상만 출력 (로그 용량 최소화)
+    com.After_Buy: INFO
