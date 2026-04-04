@@ -1,153 +1,62 @@
-﻿# After-Buy Auth Service
+# After-Buy Auth Service (인증 서비스)
 
-After-Buy MSA ?꾨줈?앺듃??**?몄쬆/?멸? 留덉씠?щ줈?쒕퉬??*?낅땲??  
-移댁뭅??OAuth 濡쒓렇?? JWT ?좏겙 諛쒓툒쨌媛깆떊, ?대? ?쒕퉬??媛??몄쬆???대떦?⑸땲??
+## 📌 프로젝트 소개
+MSA 기반의 After-Buy 플랫폼 환경에서 사용자 인증(카카오 소셜 로그인)과 보안(JWT), 회원가입 흐름 및 세션 연장을 중앙 설계하고 통제하는 기반 마이크로서비스입니다.
 
----
+## 🛠️ 기술 스택
+- **Language**: Java 17
+- **Framework**: Spring Boot 3.x, Spring Security
+- **Database**: MySQL, Spring Data JPA
+- **Communication**: WebClient (Kakao API 및 타 MSA 내부 통신용)
+- **Security**: JWT (Json Web Token)
 
-## ?뱥 湲곗닠 ?ㅽ깮
+## ✨ 주요 기능
+- **소셜 로그인 (Kakao)**: 카카오 OAuth 2.0 인가 코드로 회원 정보를 파싱하여 서비스 자동 가입 및 로그인을 처리합니다.
+- **JWT 토큰 인증**: Access Token 및 Refresh Token 발급/갱신 시스템으로 안전한 Stateless 인증 상태를 유지합니다.
+- **회원 프로필 & 통계 관리**: 타 마이크로서비스(Admin 등)를 위한 회원 통계 및 기본 프로필 데이터를 관리합니다.
+- **MSA 상호 간의 Sync (내부 통신)**: 회원가입, 탈퇴 등 유저 생명주기 발생 시 Notification(알림) 서비스와 Device(기기) 서비스의 데이터를 동기화하는 내부 브릿지를 제공합니다.
+- **Swagger API 자동화**: `@Operation`, `@Tag` 등의 어노테이션 규격을 활용하여 프론트엔드 및 타 개발자를 위한 API 명세서를 자동으로 제공합니다.
 
-| ??ぉ | ?댁슜 |
-|---|---|
-| Language | Java 21 |
-| Framework | Spring Boot 3.3.5 |
-| Database | MySQL (AWS RDS) |
-| Auth | JWT (jjwt 0.12.5) |
-| OAuth | Kakao OAuth 2.0 |
-| Docs | Swagger UI (Springdoc 2.6.0) |
-| Container | Docker |
+## 📁 폴더 구조
+```text
+src/main/java/com/After_Buy/AuthService/
+├── client      # 외부(Kakao) API 및 MSA 타 서비스 연동을 위한 WebClient 어댑터
+├── config      # Security, Swagger, WebClient 인프라 설정 빈 등록 클래스
+├── controller  # 사용자 인증 및 MSA 내부망 연동 REST API 엔드포인트
+├── dto         # 계층 간 데이터 교환을 위한 Request / Response 모델
+├── entity      # User, RefreshToken 등 데이터베이스 영속성 객체
+├── exception   # 서비스 전역 에러 캐치 및 통합형 예외 응답 핸들러
+├── repository  # 데이터베이스 접근을 담당하는 Spring Data JPA 계층
+├── security    # JWT 토큰 생성, 파싱 및 시큐리티 권한 필터
+└── service     # 토큰 제어, 회원가입, 통계 조회 등 핵심 비즈니스 로직
+```
 
----
+## 🚀 Getting Started (서버 실행 방법)
 
-## ?? 濡쒖뺄 ?쒕쾭 ?ㅽ뻾 諛⑸쾿
+### 1. 환경 변수 세팅
+앱 구동 전 필수적으로 주입되어야 하는 환경변수 리스트입니다. 프로젝트 최상단 디렉터리(루트 경로)에 `.env` 파일을 직접 생성한 뒤 아래 변수들을 기입하여 사용하거나, IDE 환경변수로 주입해 주세요.
+* `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` (MySQL 연동)
+  > ⚠️ **데이터베이스 필수 조건**: 서버를 구동하기 전, MySQL 내부에 `DB_NAME`으로 지정할 이름(예: `auth_db`)의 빈 데이터베이스가 반드시 미리 생성되어 있어야 합니다.
+* `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` (카카오 개발자 앱 연동 ID 및 Secret)
+* `JWT_SECRET` (256비트 이상의 시크릿 키 문자열)
+* `INTERNAL_SECRET_KEY` (타 MSA와의 승인된 통신을 위한 내부 고유 키)
+* `SERVICES_DEVICE_URL`, `SERVICES_NOTIFICATION_URL` (대상 MSA 주소)
 
-### ?ъ쟾 ?붽뎄?ы빆
-
-- Java 21 ?댁긽
-- MySQL 8.0 ?댁긽 (?먮뒗 AWS RDS ?묒냽 ?뺣낫)
-- 移댁뭅??媛쒕컻?????깅줉 諛?REST API Key
-
----
-
-### 1?④퀎 ???섍꼍蹂???뚯씪 ?ㅼ젙
-
-`.env_example` ?뚯씪??蹂듭궗?섏뿬 `.env` ?뚯씪???앹꽦?섍퀬 ?ㅼ젣 媛믪쑝濡?梨꾩썙二쇱꽭??
-
+### 2. 프로젝트 빌드
+터미널을 열고 프로젝트 루트 경로에서 아래 명렁어를 통해 테스트를 제외한 쾌속 클린 빌드를 수행합니다.
 ```bash
-cp .env_example .env
+# mac/linux의 경우 권한 처리 필요 (chmod +x gradlew)
+./gradlew clean build -x test
 ```
 
-`.env` ?뚯씪 ??ぉ ?ㅻ챸:
-
-```env
-# Database (AWS RDS ?먮뒗 濡쒖뺄 MySQL)
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=auth_db
-DB_USERNAME=root
-DB_PASSWORD=your_db_password
-
-# JWT ?쒕챸 ??(理쒖냼 32諛붿씠???댁긽 ?쒕뜡 臾몄옄??沅뚯옣)
-JWT_SECRET=your_jwt_secret_key
-JWT_ACCESS_EXPIRATION=3600000       # ?≪꽭???좏겙 留뚮즺 (ms) - 湲곕낯 1?쒓컙
-JWT_REFRESH_EXPIRATION=1209600000  # 由ы봽?덉떆 ?좏겙 留뚮즺 (ms) - 湲곕낯 14??
-# 移댁뭅??OAuth
-KAKAO_CLIENT_ID=your_kakao_rest_api_key
-KAKAO_CLIENT_SECRET=your_kakao_client_secret
-KAKAO_REDIRECT_URI=http://localhost:8081/login/oauth2/code/kakao
-
-# MSA ?대? ?듭떊 怨듭쑀 鍮꾨???INTERNAL_SECRET_KEY=your_internal_secret_key
-
-# AWS S3 (?꾨줈???대?吏 Pre-signed URL, ?ъ슜 ???쒖꽦??
-AWS_ACCESS_KEY=your_aws_access_key
-AWS_SECRET_KEY=your_aws_secret_key
-AWS_REGION=ap-northeast-2
-AWS_S3_BUCKET=your_s3_bucket_name
-```
-
----
-
-### 2?④퀎 ???곗씠?곕쿋?댁뒪 以鍮?
-MySQL???묒냽?섏뿬 ?곗씠?곕쿋?댁뒪瑜??앹꽦?⑸땲??
-
-```sql
-CREATE DATABASE auth_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-> ?뚯씠釉붿? ?쒕쾭 ?ㅽ뻾 ??JPA `ddl-auto`???섑빐 ?먮룞 ?앹꽦?⑸땲??
-
----
-
-### 3?④퀎 ???쒕쾭 ?ㅽ뻾
-
-#### Gradle濡?吏곸젒 ?ㅽ뻾 (沅뚯옣)
-
+### 3. 로컬 서버 실행
+기본적인 `dev` 프로필을 활성화하여 내장 톰캣으로(기본 설정 포트: 8081) 서버를 가동합니다.
 ```bash
-# Windows
-./gradlew.bat bootRun
-
-# Mac / Linux
-./gradlew bootRun
+./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
-#### JAR 鍮뚮뱶 ???ㅽ뻾
-
-```bash
-# 鍮뚮뱶 (?뚯뒪???쒖쇅)
-./gradlew bootJar -x test
-
-# ?ㅽ뻾
-java -jar build/libs/AuthService-0.0.1-SNAPSHOT.jar
-```
-
-?쒕쾭媛 ?뺤긽 湲곕룞?섎㈃ ?꾨옒 ?ы듃?먯꽌 ?묐떟?⑸땲??
-
-```
-http://localhost:8081
-```
-
----
-
-### 4?④퀎 ??API 臾몄꽌 ?뺤씤 (Swagger UI)
-
-?쒕쾭 ?ㅽ뻾 ??釉뚮씪?곗??먯꽌 ?묒냽:
-
-```
+### 4. Swagger UI 활용 및 API 테스트
+서버가 정상적으로 구동되었다면, 웹 브라우저에서 아래 주소로 접속하여 API 명세를 확인하고 즉각적인 테스트를 진행할 수 있습니다.
+```text
 http://localhost:8081/swagger-ui/index.html
 ```
-
----
-
-## ?맫 Docker濡??ㅽ뻾
-
-```bash
-# ?대?吏 鍮뚮뱶
-docker build -t after-buy-auth-service .
-
-# 而⑦뀒?대꼫 ?ㅽ뻾 (.env ?뚯씪 二쇱엯)
-docker run -d \
-  --name auth-service \
-  --env-file .env \
-  -p 8081:8081 \
-  after-buy-auth-service
-```
-
----
-
-## ?뱻 二쇱슂 API ?붾뱶?ъ씤??
-| Method | URL | ?ㅻ챸 |
-|---|---|---|
-| GET | `/auth/kakao/login` | 移댁뭅??OAuth 濡쒓렇??由щ떎?대젆??|
-| GET | `/auth/kakao/callback` | 移댁뭅??OAuth 肄쒕갚 泥섎━ |
-| POST | `/auth/refresh` | Access Token ?щ컻湲?|
-| DELETE | `/auth/logout` | 濡쒓렇?꾩썐 |
-| GET | `/internal/auth/validate` | ?대? ?쒕퉬?ㅼ슜 ?좏겙 寃利?|
-
-> ?꾩껜 API 紐낆꽭??Swagger UI瑜?李멸퀬?섏꽭??
-
----
-
-## ?뵍 蹂댁븞 二쇱쓽?ы빆
-
-- `.env` ?뚯씪? **?덈? Git??而ㅻ컠?섏? 留덉꽭??* (`.gitignore`???깅줉??
-- `JWT_SECRET`? 理쒖냼 32諛붿씠???댁긽???쒕뜡 媛믪쓣 ?ъ슜?섏꽭??- `INTERNAL_SECRET_KEY`??MSA ??紐⑤뱺 ?쒕퉬?ㅼ? ?숈씪??媛믪쓣 怨듭쑀?댁빞 ?⑸땲??
