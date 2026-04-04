@@ -36,6 +36,11 @@ out/
 ### VS Code ###
 .vscode/
 
-### Custom Env - 환경변수 파일 깃 업로드 금지###
+### Custom Env - 환경변수 파일 깃헙 업로드 금지 ###
 .env
 .env.*
+
+### Custom Reports - 로컬 개발 보고서 파일 제외 ###
+Auth_Service_Development_Report.md
+Auth_Service_Swagger_Guide.md
+Auth_Service_Troubleshooting_Report.md

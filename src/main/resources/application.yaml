@@ -36,3 +36,25 @@ spring:
   #       static: ${AWS_REGION}
   #     s3:
   #       bucket: ${AWS_S3_BUCKET}
+
+# 내부 서비스 통신용 시크릿 키
+internal:
+  secret-key: ${INTERNAL_SECRET_KEY}
+
+# 카카오 연동 설정
+kakao:
+  client-id: ${KAKAO_CLIENT_ID}
+  client-secret: ${KAKAO_CLIENT_SECRET}
+  token-url: ${KAKAO_TOKEN_URL:https://kauth.kakao.com/oauth/token}
+  user-info-url: ${KAKAO_USER_INFO_URL:https://kapi.kakao.com/v2/user/me}
+
+# 타 서비스 호출 URL (WebClient)
+services:
+  device-url: ${SERVICES_DEVICE_URL:http://localhost:8082}
+  notification-url: ${SERVICES_NOTIFICATION_URL:http://localhost:8083}
+
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}
