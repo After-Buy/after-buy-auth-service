@@ -18,10 +18,11 @@ import java.util.List;
 
 /**
  * 스프링 시큐리티 및 인가 방화벽 코어 구성 파일
- * 각종 인증되지 않은 악의적 접근으로부터 API 엔드포인트를 보호하고 CORS 횡단 스크립트 및 세션 무상태 정책(Stateless) 조율을 담당하는 글로벌 필터 박스입니다.
+ * 각종 인증되지 않은 악의적 접근으로부터 API 엔드포인트를 보호하고 CORS 횡단 스크립트 및 세션 무상태 정책(Stateless) 조율을
+ * 담당하는 글로벌 필터 박스입니다.
  *
  * @since : 2026.04.04
- * @version : 1.0.0
+ * @version : 1.0.1
  * @author : 신태훈
  */
 @Configuration
@@ -32,7 +33,8 @@ public class SecurityConfig {
 
     /**
      * 통합 서블릿 통행 제어 및 권한 결정 빈
-     * CSRF를 끄고 이중 JWT 필터를 최앞단에 장착하며 특수 개방 엔드포인트(로그인, Swagger, Health 등) 예외를 허용한 뒤 모든 남은 구역을 암호화 통제 처리합니다.
+     * CSRF를 끄고 이중 JWT 필터를 최앞단에 장착하며 특수 개방 엔드포인트(로그인, Swagger, Health 등) 예외를 허용한 뒤
+     * 모든 남은 구역을 암호화 통제 처리합니다.
      *
      * @param http : 방어 체인을 빌드할 스프링의 HttpSecurity 원시 세팅 도구
      * @return : 각종 예외 정책과 룰이 버무려진 보안 필터 체인 박스 반환
@@ -41,24 +43,26 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/api/auth/kakao/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/auth/token/refresh").permitAll()
-                .requestMatchers("/internal/**").permitAll()
-                .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/api/auth/kakao/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/token/refresh").permitAll()
+                        .requestMatchers("/internal/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/api/auth/swagger-ui.html", "/api/auth/swagger-ui/**",
+                                "/api/auth/v3/api-docs/**")
+                        .permitAll()
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
     /**
      * CORS 횡단 자원 공격 방어 보안 해제 규정록
-     * 모든 프론트 헤더와 접근 메소드 규칙을 활짝 열어두어 모바일 및 웹 클라이언트 양방향 환경 모두에서 차단 없이 원활하게 접속하게 만들어주는 정책 객체를 생성합닙다.
+     * 모든 프론트 헤더와 접근 메소드 규칙을 활짝 열어두어 모바일 및 웹 클라이언트 양방향 환경 모두에서 차단 없이 원활하게 접속하게 만들어주는
+     * 정책 객체를 생성합닙다.
      *
      * @return : 모든 출처 IP 와 통신 헤더가 수락되도록 구성된 개방형 CORS 소스 집합 빈
      */
