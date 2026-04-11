@@ -1,11 +1,9 @@
 package com.After_Buy.AuthService.client;
 
-import com.After_Buy.AuthService.exception.CustomException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Map;
 
@@ -33,26 +31,21 @@ public class InternalDeviceClient {
     }
 
     /**
-     * 회원의 가입된 기기(Device) 데이터 전체 삭제 요청 메소드
-     * 회원이 회원 탈퇴를 진행할 경우 Device Service 쪽에 보관된 해당 유저의 스마트폰 기기 토큰 등을 즉각 폐기하도록 통신합니다.
+     * 회원의 가입된 기기(Device) 데이터 전체 삭제 요청 메서드 (비동기 Fire & Forget)
+     * 회원이 탈퇴를 진행할 경우 Device Service 쪽에 보관된 해당 유저의 기기 데이터를 폐기하도록 요청합니다.
+     * 탈퇴의 핵심 목적은 auth_db.users 레코드 삭제이므로, Device Service 일시 장애로 인해
+     * 탈퇴 자체가 실패해서는 안 됩니다. 실패 시 에러 로그만 기록합니다.
      *
      * @param userId : 삭제할 대상이 되는 소유자의 사용자 PK
-     * @throws CustomException : 대상 서버가 응답 실패 상태를 반환하거나 접속 불가능할 경우 시스템 예외 발생
      */
     public void deleteUserDevices(Long userId) {
-        try {
-            this.webClient.delete()
-                    .uri("/internal/devices/users/{userId}", userId)
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
-            log.info("기기 데이터 삭제 완료: userId={}", userId);
-        } catch (WebClientResponseException e) {
-            log.error("기기 데이터 삭제 실패: userId={}, status={}", userId, e.getStatusCode());
-            throw CustomException.internalError("기기 데이터 삭제에 실패했습니다.");
-        } catch (Exception e) {
-            log.error("Device Service 연결 실패: userId={}, error={}", userId, e.getMessage());
-            throw CustomException.internalError("기기 서비스에 연결할 수 없습니다.");
-        }
+        this.webClient.delete()
+                .uri("/internal/devices/users/{userId}", userId)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .subscribe(
+                    result -> log.info("기기 데이터 삭제 완료: userId={}", userId),
+                    error  -> log.error("Device Service 연결 실패: userId={}, error={}", userId, error.getMessage())
+                );
     }
 }
