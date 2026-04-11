@@ -34,26 +34,24 @@ public class InternalNotificationClient {
     }
 
     /**
-     * 알림 상세 세팅(Settings) 초기화 요청
+     * 알림 상세 세팅(Settings) 초기화 요청 (비동기 Fire & Forget)
      * 최초 회원가입한 유저에게 시스템 상 기본 적용될 알림 권한값을 다른 서비스에 통보하여 뼈대를 만듭니다.
+     * Notification Service 일시 다운 시에도 회원가입 트랜잭션에 영향을 주지 않습니다.
+     * 실패 시 에러 로그만 기록하며, Notification Service의 Lazy Initialization이 추후 복구를 담당합니다.
      *
      * @param userId : 알람 수신 동의 상태를 적용할 유저 식별값
      * @param pushEnabled : 초기 푸시 수신 동의 상태 (1: ON, 0: OFF)
      */
     public void initPushSettings(Long userId, int pushEnabled) {
-        try {
-            webClient.post()
-                    .uri("/internal/push-settings/init")
-                    .bodyValue(Map.of("user_id", userId, "push_enabled", pushEnabled))
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
-            log.info("push_settings 초기 설정 생성 완료: userId={}", userId);
-        } catch (WebClientResponseException e) {
-            log.error("push_settings init 실패: userId={}, status={}", userId, e.getStatusCode());
-        } catch (Exception e) {
-            log.error("Notification Service 연결 실패 (init): userId={}, error={}", userId, e.getMessage());
-        }
+        webClient.post()
+                .uri("/internal/push-settings/init")
+                .bodyValue(Map.of("user_id", userId, "push_enabled", pushEnabled))
+                .retrieve()
+                .bodyToMono(Map.class)
+                .subscribe(
+                    result -> log.info("push_settings 초기 설정 생성 완료: userId={}", userId),
+                    error  -> log.error("Notification Service 연결 실패 (init): userId={}, error={}", userId, error.getMessage())
+                );
     }
 
     /**
@@ -83,26 +81,21 @@ public class InternalNotificationClient {
     }
 
     /**
-     * 알림 이력 물리적 삭제 요청
+     * 알림 이력 물리적 삭제 요청 (비동기 Fire & Forget)
      * 계정이 더 이상 유효하지 않은 환경(탈퇴 등)에서 푸시 메시지 흔적들을 영구히 폐기합니다.
+     * 탈퇴의 핵심 목적은 auth_db.users 레코드 삭제이므로, Notification Service 일시 장애로 인해
+     * 탈퇴 자체가 실패해서는 안 됩니다. 실패 시 에러 로그만 기록합니다.
      *
      * @param userId : 탈퇴 과정 중인 회원의 고유 ID
-     * @throws CustomException : 예외 상황으로 인해 삭제 과정이 거부될 시 호출
      */
     public void deleteUserNotifications(Long userId) {
-        try {
-            webClient.delete()
-                    .uri("/internal/notifications/users/{userId}", userId)
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
-            log.info("알림 데이터 삭제 완료: userId={}", userId);
-        } catch (WebClientResponseException e) {
-            log.error("알림 데이터 삭제 실패: userId={}, status={}", userId, e.getStatusCode());
-            throw CustomException.internalError("알림 데이터 삭제에 실패했습니다.");
-        } catch (Exception e) {
-            log.error("Notification Service 연결 실패 (delete): userId={}, error={}", userId, e.getMessage());
-            throw CustomException.internalError("알림 서비스에 연결할 수 없습니다.");
-        }
+        webClient.delete()
+                .uri("/internal/notifications/users/{userId}", userId)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .subscribe(
+                    result -> log.info("알림 데이터 삭제 완료: userId={}", userId),
+                    error  -> log.error("Notification Service 연결 실패 (delete): userId={}, error={}", userId, error.getMessage())
+                );
     }
 }
