@@ -21,6 +21,9 @@ public class UserStatsResponse {
     
     @JsonProperty("total_users")
     private long totalUsers;
+
+    @JsonProperty("total_users_prev_7d")
+    private long totalUsersPrev7d;
     
     @JsonProperty("new_users_7d")
     private long newUsersCurrentPeriod;

@@ -35,4 +35,12 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     @Modifying
     @Query(value="UPDATE RefreshToken rt SET rt.revoked = true WHERE rt.user = :user")
     void revokeAllByUser(@Param("user") User user);
+
+    /**
+     * 회원 탈퇴 시 연관된 모든 리프레시 토큰을 물리적으로 서버 테이블에서 제거
+     * 외래키 제약조건(users 테이블 참조) 위반을 방지하기 위해 사용자를 지우기 전 선행되어야 함.
+     *
+     * @param user : 토큰을 영구 삭제할 대상 사용자 엔티티
+     */
+    void deleteByUser(User user);
 }
