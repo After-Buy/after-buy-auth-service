@@ -133,6 +133,10 @@ public class AuthService {
         User user = this.userRepository.findById(userId).orElseThrow(() -> CustomException.notFound("존재하지 않는 사용자입니다."));
         this.deviceClient.deleteUserDevices(userId);
         this.notificationClient.deleteUserNotifications(userId);
+        
+        // 외래키 제약조건(fk_refresh_token_user) 위반 방지를 위해 리프레시 토큰 선삭제
+        this.refreshTokenRepository.deleteByUser(user);
+        
         this.userRepository.delete(user);
         log.info("회원 탈퇴 완료: userId={}", userId);
     }

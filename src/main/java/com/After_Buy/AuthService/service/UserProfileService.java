@@ -111,8 +111,16 @@ public class UserProfileService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime currentPeriodStart = now.minusDays(days);
         LocalDateTime prevPeriodStart = now.minusDays((long)days * 2L);
+        
+        long totalUsersPrev = this.userRepository.countByCreatedAtBefore(currentPeriodStart);
         long newUsersCurrent = this.userRepository.countByCreatedAtBetween(currentPeriodStart, now);
         long newUsersPrev = this.userRepository.countByCreatedAtBetween(prevPeriodStart, currentPeriodStart);
-        return UserStatsResponse.builder().totalUsers(totalUsers).newUsersCurrentPeriod(newUsersCurrent).newUsersPrevPeriod(newUsersPrev).build();
+        
+        return UserStatsResponse.builder()
+                .totalUsers(totalUsers)
+                .totalUsersPrev7d(totalUsersPrev)
+                .newUsersCurrentPeriod(newUsersCurrent)
+                .newUsersPrevPeriod(newUsersPrev)
+                .build();
     }
 }

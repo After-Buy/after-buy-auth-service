@@ -1,5 +1,6 @@
 package com.After_Buy.AuthService.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -7,6 +8,7 @@ import lombok.Getter;
 /**
  * 사용자 통계 정보 응답 DTO
  * 어드민 대시보드 등에서 사용할 목적으로 카운트된 유저 통계 수치를 담아 반환하는 객체
+ * Admin Service와의 필드 호환성을 위해 @JsonProperty 설정 추가
  *
  * @since : 2026.04.04
  * @version : 1.0.0
@@ -16,12 +18,16 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class UserStatsResponse {
-    // 앱 내 전체 누적 가입자 수 
-    private long totalUsers;
     
-    // 현재 기준 기간(최근 N일) 내에 가입한 신규 유저 수
+    @JsonProperty("total_users")
+    private long totalUsers;
+
+    @JsonProperty("total_users_prev_7d")
+    private long totalUsersPrev7d;
+    
+    @JsonProperty("new_users_7d")
     private long newUsersCurrentPeriod;
     
-    // 이전 기준 기간(이전 N일) 내에 가입한 신규 유저 수 (증감률 비교용도)
+    @JsonProperty("new_users_prev_7d")
     private long newUsersPrevPeriod;
 }
