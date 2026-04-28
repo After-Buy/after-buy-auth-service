@@ -52,6 +52,7 @@ kakao:
 services:
   device-url: ${SERVICES_DEVICE_URL:http://localhost:8082}
   notification-url: ${SERVICES_NOTIFICATION_URL:http://localhost:8083}
+  admin-url: ${SERVICES_ADMIN_URL:http://localhost:8084}
 
 # JWT 설정
 jwt:
