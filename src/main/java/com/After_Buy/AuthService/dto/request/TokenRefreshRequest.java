@@ -1,5 +1,6 @@
 package com.After_Buy.AuthService.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TokenRefreshRequest {
     // 갱신을 위해 사용할 기존 Refresh Token
+    @JsonProperty("refresh_token")
     @NotBlank(message="refresh_token은 필수입니다.")
     private String refreshToken;
 }
