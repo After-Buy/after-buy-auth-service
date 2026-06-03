@@ -30,6 +30,15 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private static final String TOKEN_EXPIRED_RESPONSE = """
+            {
+              "success": false,
+              "error": {
+                "code": "TOKEN_EXPIRED",
+                "message": "Access Token이 만료되었거나 유효하지 않습니다."
+              }
+            }
+            """;
 
     /**
      * 필터 체인 내부 검증 로직 구현부
@@ -44,7 +53,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String token = extractToken(request);
-        if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+        if (StringUtils.hasText(token)) {
+            if (!jwtTokenProvider.validateToken(token)) {
+                if (isPublicPath(request)) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                SecurityContextHolder.clearContext();
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(TOKEN_EXPIRED_RESPONSE);
+                return;
+            }
             try {
                 Long userId = jwtTokenProvider.getUserIdFromToken(token);
                 UserPrincipal userPrincipal = new UserPrincipal(userId);
@@ -56,6 +76,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublicPath(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+        return ("POST".equals(method) && path.equals("/api/auth/kakao/login"))
+                || ("POST".equals(method) && path.equals("/api/auth/token/refresh"))
+                || path.startsWith("/internal/")
+                || path.equals("/actuator/health")
+                || path.equals("/api/auth/swagger-ui.html")
+                || path.startsWith("/api/auth/swagger-ui/")
+                || path.startsWith("/api/auth/v3/api-docs/")
+                || path.equals("/swagger-ui.html")
+                || path.startsWith("/swagger-ui/")
+                || path.startsWith("/v3/api-docs/");
     }
 
     /**
