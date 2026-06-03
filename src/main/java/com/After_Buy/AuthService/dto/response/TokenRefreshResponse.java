@@ -18,6 +18,8 @@ import lombok.Getter;
 public class TokenRefreshResponse {
     // 갱신된 새 Access Token
     private String accessToken;
+
+    private String refreshToken;
     
     // 새 Access Token의 만료 시간
     private long expiresIn;

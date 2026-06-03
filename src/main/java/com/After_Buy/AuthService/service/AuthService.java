@@ -91,16 +91,23 @@ public class AuthService {
      * @return : 최신 보안 유효 시간을 가진 새 Access Token이 동봉된 전송 묶음
      * @throws CustomException : 토큰이 강제 폐기(로그아웃)되었거나 기한 초과 상태라 갱신 불가일 때 예외
      */
-    @Transactional(readOnly=true)
+    @Transactional
     public TokenRefreshResponse refreshToken(String refreshTokenValue) {
         RefreshToken refreshToken = this.refreshTokenRepository.findByTokenValueAndRevokedFalse(refreshTokenValue).orElseThrow(() -> CustomException.unauthorized("유효하지 않거나 폐기된 Refresh Token입니다. 재로그인이 필요합니다."));
         if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw CustomException.unauthorized("Refresh Token이 만료되었습니다. 재로그인이 필요합니다.");
         }
-        Long userId = refreshToken.getUser().getUserId();
+        User user = refreshToken.getUser();
+        Long userId = user.getUserId();
         String newAccessToken = this.jwtTokenProvider.generateAccessToken(userId);
+        String newRefreshToken = this.jwtTokenProvider.generateRefreshToken(userId);
         long expiresIn = this.jwtTokenProvider.getExpiresIn(newAccessToken);
-        return TokenRefreshResponse.builder().accessToken(newAccessToken).expiresIn(expiresIn).build();
+        LocalDateTime expiresAt = this.jwtTokenProvider.getExpirationFromToken(newRefreshToken).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+        refreshToken.setRevoked(true);
+        this.refreshTokenRepository.save(RefreshToken.builder().user(user).tokenValue(newRefreshToken).expiresAt(expiresAt).build());
+
+        return TokenRefreshResponse.builder().accessToken(newAccessToken).refreshToken(newRefreshToken).expiresIn(expiresIn).build();
     }
 
     /**
